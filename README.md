@@ -1,6 +1,6 @@
-# Channel Intelligence Research Agent (CIRA)
+# Financial Intelligence Research Agent (FIRA)
 
-> **Multi-agent system for channel sales intelligence** — Built with LangGraph, AutoGen, CrewAI, and LangChain (Ingram Micro stack)
+> **Multi-agent system for automated equity research** — Built with LangGraph, AutoGen, CrewAI, and LangChain using public financial data (SEC filings, earnings calls, 13F, options flow)
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-green.svg)](https://langchain-ai.github.io/langgraph/)
@@ -10,56 +10,67 @@
 
 ## Overview
 
-The **Channel Intelligence Research Agent (CIRA)** is a production-ready multi-agent system that mirrors Ingram Micro's agentic AI architecture. It autonomously researches vendors, market trends, and channel partners to generate actionable sales briefings — similar to Ingram Micro's **Sales Briefing Assistant** built on their **Xvantage AI Factory**.
+The **Financial Intelligence Research Agent (FIRA)** is a production-ready multi-agent system that automates equity research using public financial data. It mirrors the architecture used by institutional research desks — autonomously analyzing SEC filings, earnings calls, institutional holdings, insider trades, and options flow to generate investment briefings.
 
-### Key Features
+**Analogous to**: Bloomberg Terminal + equity research analyst, but automated via agentic AI.
 
-| Capability | Technology | Ingram Micro Alignment |
-|------------|------------|------------------------|
-| **Orchestration** | LangGraph supervisor graph | AI Factory operational model |
-| **Vendor Research** | AutoGen multi-agent conversation | ADK, LangChain, AutoGen, CrewAI |
-| **Market Intelligence** | LangGraph state machine | 400+ internal models + external LLMs |
-| **Partner Profiling** | CrewAI role-based crews | Multi-system integration (CRM, ERP) |
-| **Synthesis & Briefing** | LangChain LCEL | Structured output with citations |
-| **RAG Pipeline** | ChromaDB + Hybrid Search + Rerank | Vector DBs, Knowledge Graphs |
-| **Observability** | LangSmith + Prometheus + Cost Tracking | MLOps/LLMOps for agent lifecycle |
+### Key Use Cases
+
+| Use Case | Example Query | Output |
+|---|---|---|
+| **Earnings Intelligence** | "Summarize NVDA Q3 earnings + guidance vs peers" | Structured briefing: revenue, margins, guidance, key quotes, peer comparison |
+| **SEC Filing Analysis** | "What risks did NVDA disclose in 10-K vs last year?" | Risk factor diff, red flags, material changes |
+| **Peer Benchmarking** | "Compare AVGO vs MRVL on FCF conversion, R&D %, debt" | Side-by-side table with percentile rankings |
+| **Catalyst Tracking** | "Upcoming catalysts for semis in Q1 2025" | Calendar: earnings, investor days, product launches, FDA decisions |
+| **Institutional Flow** | "13F changes for top 10 holders of AMZN" | Buyer/seller analysis, position sizing, conviction signals |
+| **Credit/Event Risk** | "Distress signals in retail sector — who's next?" | Z-scores, covenant analysis, maturity walls, short interest |
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        USER QUERY                                │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  SUPERVISOR (LangGraph)                          │
-│  • Plans research strategy                                       │
-│  • Routes to specialist agents                                   │
-│  • Manages token/cost budgets                                    │
-└─────────────────────────────┬───────────────────────────────────┘
+USER QUERY: "Analyze NVDA Q3 earnings vs AMD/INTC + 13F changes + option flow"
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    SUPERVISOR GRAPH (LangGraph)                     │
+│  ResearchPlan: tickers, form_types, lookback, data_sources, peers  │
+└─────────────────────────────┬───────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
         ▼                     ▼                     ▼
 ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│ VENDOR AGENT  │    │ MARKET AGENT  │    │ PARTNER AGENT │
-│ (AutoGen)     │    │ (LangGraph)   │    │ (CrewAI)      │
+│ FILINGS AGENT │    │ MARKET AGENT  │    │ STAKEHOLDER   │
+│ (AutoGen)     │    │ (LangGraph)   │    │ AGENT (CrewAI)│
 ├───────────────┤    ├───────────────┤    ├───────────────┤
-│ • Product cat │    │ • News/API    │    │ • Firmographics│
-│ • Pricing     │    │ • Trends      │    │ • Tech stack  │
-│ • Roadmaps    │    │ • Competitors │    │ • Buying hist │
+│ • Researcher  │    │ • Price/Vol   │    │ • 13F Analyst │
+│   (SEC API)   │    │ • Options     │    │ • Insider     │
+│ • Analyst     │    │ • Estimates   │    │ • Credit      │
+│   (diff, XBRL)│    │ • Calendar    │    │               │
+│ Round-robin   │    │ State machine │    │ Sequential    │
+│ max 6 rounds  │    │               │    │ process       │
 └───────────────┘    └───────────────┘    └───────────────┘
         │                     │                     │
         └─────────────────────┼─────────────────────┘
                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                  SYNTHESIS (LangChain LCEL)                      │
-│  • Cross-references findings                                     │
-│  • Scores opportunities                                          │
-│  • Generates structured briefing                                 │
-│  • Cites sources (RAG)                                           │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                    SYNTHESIS AGENT (LangChain LCEL)                 │
+│  Score = 0.40×Fundamental + 0.25×Valuation + 0.25×Catalyst + 0.10×Sentiment
+│  Output: Investment Thesis → Metrics → Risks → Catalysts → Action  │
+└─────────────────────────────────────────────────────────────────────┘
 ```
+
+## Tech Stack Alignment
+
+| Requirement | Implementation |
+|---|---|
+| **LangGraph** | Supervisor graph + Market Agent state machine |
+| **AutoGen** | Filings Agent (Researcher + Analyst) |
+| **CrewAI** | Stakeholder Agent (13F/Insider/Credit roles) |
+| **LangChain LCEL** | Synthesis pipeline with structured output |
+| **Vector DB** | ChromaDB (local), Pinecone/Weaviate (prod) |
+| **LLMs** | GPT-4o, Claude 3.5, Gemini 1.5 via LiteLLM |
+| **Observability** | LangSmith + Prometheus + Cost tracking |
+| **CI/CD** | Ruff, MyPy, pytest, Bandit, Docker |
 
 ## Quick Start
 
@@ -67,14 +78,14 @@ The **Channel Intelligence Research Agent (CIRA)** is a production-ready multi-a
 
 - Python 3.11+
 - Poetry 1.8+
-- API Keys: OpenAI, Anthropic, Google, Tavily/SerpAPI, NewsAPI, LangSmith
+- API Keys: OpenAI, Anthropic, Google, SEC API, Alpha Vantage, NewsAPI, LangSmith
 
 ### Installation
 
 ```bash
 # Clone and navigate
-git clone <repo-url>
-cd channel-intelligence-agent
+git clone https://github.com/abhishekabhi779/financial-intelligence-agent.git
+cd financial-intelligence-agent
 
 # Install dependencies
 make install-dev
@@ -87,17 +98,27 @@ cp .env.example .env
 make dev
 ```
 
-### Docker Development
+### API Keys Required (Free Tiers Available)
 
-```bash
-# Start all services (API, ChromaDB, Jupyter, Prometheus, Grafana)
-make up
+```env
+# SEC Filings (choose one)
+SEC_API_KEY=***              # sec-api.io (100 free/mo)
+# OR use edgartools (no key needed)
 
-# View logs
-make logs
+# Earnings & Market Data
+ALPHA_VANTAGE_API_KEY=***    # 25 req/day free
+TWELVE_DATA_API_KEY=***      # 800 req/day free
 
-# Stop services
-make down
+# News & Sentiment
+NEWSAPI_KEY=***              # 100 req/day free
+
+# Observability
+LANGSMITH_API_KEY=***        # Tracing
+
+# LLM Providers
+OPENAI_API_KEY=***
+ANTHROPIC_API_KEY=***
+GOOGLE_API_KEY=***
 ```
 
 ## Usage
@@ -105,38 +126,34 @@ make down
 ### CLI
 
 ```bash
-# Run research query
-make run QUERY="Which vendors should I pitch for Q1 tech refresh?"
+# Full research briefing
+make run QUERY="NVDA Q3 earnings vs AMD/INTC + 13F changes"
 
 # Or use CLI directly
-poetry run channel-intel research "What are the top MSP opportunities for Dell?"
+poetry run fi research "AVGO vs MRVL peer comparison" --output briefing.json
 
-# Vendor-specific research
-poetry run channel-intel vendor "Dell, Cisco, Microsoft" --output vendors.json
+# SEC filings deep-dive
+poetry run fi filings "NVDA" --forms 10-K,10-Q --output filings.json
 
-# Partner research
-poetry run channel-intel partner "MSPs, VARs" --vendor "Dell" --output partners.json
-
-# Ingest data for RAG
-poetry run channel-intel ingest vendor "Dell" --path ./data/vendor_docs/dell_catalog.pdf
-poetry run channel-intel ingest partner "CDW" --data '{"revenue": "$20B", "specializations": ["cloud", "security"]}'
+# Institutional/insider analysis
+poetry run fi stakeholder "NVDA" --types 13f,insider --output holders.json
 ```
 
 ### REST API
 
 ```bash
 # Start server
-make dev  # or: poetry run uvicorn channel_intel.api.main:app --reload
+make dev  # or: poetry run uvicorn financial_intel.api.main:app --reload
 
 # Research endpoint
 curl -X POST http://localhost:8000/research \
   -H "Content-Type: application/json" \
-  -d '{"query": "Which vendors have the best partner programs for MSPs?"}'
+  -d '{"query": "NVDA Q3 earnings analysis with peer comparison"}'
 
-# Streaming endpoint
+# Streaming endpoint (SSE)
 curl -X POST http://localhost:8000/research/stream \
   -H "Content-Type: application/json" \
-  -d '{"query": "Market trends for cybersecurity in 2025"}'
+  -d '{"query": "Distress signals in retail sector"}'
 
 # Health check
 curl http://localhost:8000/health
@@ -149,17 +166,17 @@ curl http://localhost:8000/metrics
 
 ```python
 import asyncio
-from channel_intel.graph.supervisor import run_research
+from financial_intel.graph.supervisor import run_research
 
 async def main():
     result = await run_research(
-        user_query="Which vendors should I target for H1 2025 tech refresh?",
+        user_query="Analyze NVDA Q3 earnings vs AMD/INTC with 13F changes",
         session_id="my-session-001",
     )
     
     print(result["briefing_final"])
     for opp in result["opportunities"]:
-        print(f"- {opp.vendor} × {opp.partner}: {opp.score:.0%}")
+        print(f"🎯 {opp.ticker} — Score: {opp.score:.0%}")
 
 asyncio.run(main())
 ```
@@ -177,28 +194,54 @@ llm:
   default_model: gpt-4o
   agent_models:
     supervisor: gpt-4o
-    vendor_agent: gpt-4o
+    filings_agent: gpt-4o
     market_agent: gpt-4o-mini
-    partner_agent: gpt-4o
+    stakeholder_agent: gpt-4o
     synthesis: gpt-4o
 
-rag:
-  chunking_strategy: semantic
-  top_k: 10
-  rerank_top_k: 5
-  hybrid_search_alpha: 0.5
+scoring:
+  fundamental_quality:
+    weights:
+      roic_percentile: 0.25
+      fcf_margin_percentile: 0.20
+      revenue_growth_percentile: 0.20
+      gross_margin_percentile: 0.15
+      debt_to_ebitda_inverse: 0.10
+      piotroski_f_score: 0.10
+  
+  valuation:
+    weights:
+      pe_percentile_inverse: 0.30
+      ev_ebitda_percentile_inverse: 0.25
+      fcf_yield_percentile: 0.20
+      peg_percentile_inverse: 0.15
+      price_sales_percentile_inverse: 0.10
+  
+  catalyst:
+    weights:
+      earnings_momentum: 0.35
+      guidance_revision: 0.25
+      institutional_accumulation: 0.20
+      insider_buying: 0.10
+      option_flow_bullish: 0.10
+
+  composite:
+    fundamental_quality: 0.40
+    valuation: 0.25
+    catalyst: 0.25
+    sentiment: 0.10
 
 agents:
-  vendor_agent:
-    max_rounds: 8
-  partner_agent:
+  filings_agent:
+    max_rounds: 6
+  stakeholder_agent:
     crew:
       max_rpm: 10
 
 observability:
   langsmith:
     enabled: true
-    project_name: channel-intel
+    project_name: financial-intel
   cost_tracking:
     budget_usd_per_day: 50.0
 ```
@@ -206,55 +249,54 @@ observability:
 ## Project Structure
 
 ```
-channel-intelligence-agent/
+financial-intelligence-agent/
+├── AGENTS.md                          # Instructions for AI agents
 ├── configs/
-│   ├── settings.yaml          # Main configuration
-│   ├── prompts/               # Agent prompts
-│   └── eval/                  # Golden eval sets
-├── src/channel_intel/
-│   ├── config.py              # Pydantic Settings
-│   ├── state.py               # LangGraph TypedDict state
+│   ├── settings.yaml                  # All config (LLM, RAG, agents, scoring)
+│   ├── prompts/                       # Agent prompts (YAML)
+│   └── eval/
+│       └── golden_sets.jsonl          # 20+ evaluation benchmarks
+├── src/financial_intel/
+│   ├── config.py                      # Pydantic Settings loader
+│   ├── state.py                       # TypedDict state + Financial Pydantic models
 │   ├── graph/
-│   │   ├── supervisor.py      # Main orchestration graph
-│   │   ├── market_agent.py    # LangGraph market agent
-│   │   └── synthesis.py       # LangChain LCEL synthesis
+│   │   ├── supervisor.py              # Main LangGraph supervisor
+│   │   ├── market_agent.py            # Market data state machine
+│   │   └── synthesis.py               # LCEL synthesis pipeline
 │   ├── agents/
-│   │   ├── vendor_agent.py    # AutoGen vendor research
-│   │   └── partner_agent.py   # CrewAI partner profiling
+│   │   ├── filings_agent.py           # AutoGen: SEC filings analysis
+│   │   └── stakeholder_agent.py       # CrewAI: 13F/Insider/Credit
 │   ├── tools/
-│   │   ├── registry.py        # MCP-style tool registry
-│   │   └── core.py            # Web search, news, vector, vendor API
+│   │   ├── registry.py                # MCP-style tool registry
+│   │   ├── core.py                    # Web search, news, vector search
+│   │   └── finance.py                 # 🆕 SEC, earnings, 13F, options, calendar
 │   ├── rag/
-│   │   └── pipeline.py        # Ingestion + hybrid retrieval + rerank
+│   │   └── pipeline.py                # Ingestion + hybrid retrieval
 │   ├── api/
-│   │   └── main.py            # FastAPI application
-│   ├── observability/         # LangSmith, Prometheus, logging
-│   └── cli/                   # Typer CLI
+│   │   └── main.py                    # FastAPI application
+│   ├── observability/                 # LangSmith, Prometheus, cost tracking
+│   └── cli/                           # Typer CLI (command: `fi`)
 ├── tests/
-├── notebooks/
 ├── docker/
 ├── pyproject.toml
 ├── Makefile
-└── docker-compose.yml
+├── docker-compose.yml
+└── README.md
 ```
 
-## Ingram Micro Stack Alignment
+## Data Sources & Tools
 
-| JD Requirement | Implementation |
-|----------------|----------------|
-| **LangChain** | Core chains, RAG, LCEL, tool definitions |
-| **LangGraph** | Supervisor graph, Market Agent state machine |
-| **AutoGen** | Vendor Agent multi-agent conversation |
-| **CrewAI** | Partner Agent role-based crew |
-| **Google ADK** | Exploration branch (planned) |
-| **Python** | Primary language throughout |
-| **scikit-learn/Pandas/NumPy** | Partner scoring, trend analysis |
-| **Vector DBs** | ChromaDB (local), Pinecone/Weaviate (prod) |
-| **LLMs** | GPT-4o, Claude 3.5, Gemini 1.5 via LiteLLM |
-| **Cloud** | Docker → Cloud Run/ECS/Container Apps |
-| **Git/GitHub Actions** | CI: lint, type-check, test, build, scan |
-| **Docker** | Multi-stage builds, dev/prod parity |
-| **MLOps** | LangSmith tracing, cost tracking, Prometheus |
+| Tool | Category | Source | Free Tier |
+|---|---|---|---|
+| `sec_filing_search` | sec | sec-api.io / edgartools | 100/mo / unlimited |
+| `sec_xbrl_extract` | sec | SEC XBRL | free |
+| `sec_filing_diff` | sec | Custom diff engine | free |
+| `earnings_transcript` | earnings | Alpha Vantage | 25/day |
+| `fundamental_snapshot` | market | Alpha Vantage / yfinance | 25/day / unlimited |
+| `thirteen_f_changes` | institutional | sec-api.io | 100/mo |
+| `insider_trades` | insider | sec-api.io / OpenInsider | 100/mo / free |
+| `unusual_options_flow` | options | CBOE / ThetaData | paid |
+| `events_calendar` | calendar | Multiple | free |
 
 ## Evaluation
 
@@ -268,13 +310,14 @@ poetry run pytest tests/eval/ -v
 open htmlcov/index.html
 ```
 
-Benchmarks include:
-- Vendor research accuracy (vs. golden Q&A)
-- Market signal relevance
-- Partner profiling completeness
-- End-to-end briefing quality
-- Hallucination rate
-- Cost per research session
+Benchmarks include (`configs/eval/golden_sets.jsonl`):
+- Earnings analysis accuracy (vs. golden Q&A)
+- SEC filing diff detection
+- Peer benchmarking table correctness
+- 13F change detection + conviction scoring
+- Distress dashboard signal quality
+- Hallucination rate < 20%
+- Cost per research session tracking
 
 ## Deployment
 
@@ -287,21 +330,38 @@ make build
 # Run
 docker run -d \
   -p 8000:8000 \
-  -e OPENAI_API_KEY=... \
-  -e ANTHROPIC_API_KEY=... \
-  -e TAVILY_API_KEY=... \
-  -e LANGSMITH_API_KEY=... \
-  channel-intel:latest
+  -e OPENAI_API_KEY=*** \
+  -e ANTHROPIC_API_KEY=*** \
+  -e SEC_API_KEY=*** \
+  -e ALPHA_VANTAGE_API_KEY=*** \
+  -e LANGSMITH_API_KEY=*** \
+  financial-intel:latest
 ```
 
 ### Cloud Options
 
 | Platform | Command |
-|----------|---------|
-| **GCP Cloud Run** | `gcloud run deploy --image=channel-intel` |
+|---|---|
+| **GCP Cloud Run** | `gcloud run deploy --image=financial-intel` |
 | **AWS ECS/Fargate** | `ecs-cli compose up` |
 | **Azure Container Apps** | `az containerapp up` |
 | **Kubernetes** | `kubectl apply -f k8s/` |
+
+## Roadmap (Where to Improve)
+
+### High Priority
+1. **SEC Filing Diff Engine** — Automated 10-K/10-Q section diffing with new risk factor highlights
+2. **Guidance Tracker** — Parse every earnings call for guidance changes vs consensus, track accuracy
+3. **13F Conviction Scoring** — Weight holders by track record, holding period, position sizing
+4. **Options Flow + Filings Fusion** — Correlate unusual put/call activity with 8-K events
+5. **Congressional Trading Overlay** — Quiver Quantitative senator trades vs sector exposure
+
+### Medium Priority
+6. **Distress Dashboard** — Automated Z-score, covenant monitoring, maturity wall visualization
+7. **Earnings Prep Packs** — Auto-generated 2-pagers before every earnings call
+8. **Real-time Alerts** — 8-K triggers, 13F changes, option blocks → webhook/Slack
+9. **Factor Model Integration** — Barra-style risk factors, style attribution
+10. **Backtesting Framework** — Score → forward returns, IC decay analysis
 
 ## Contributing
 
@@ -318,12 +378,13 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- **Ingram Micro** for pioneering the Xvantage AI Factory and agentic AI architecture
-- **LangChain/LangGraph** team for the orchestration framework
+- **SEC** for EDGAR public filings access
+- **Alpha Vantage** for free earnings call transcripts
+- **LangChain/LangGraph** team for orchestration framework
 - **Microsoft AutoGen** team for multi-agent conversation
 - **CrewAI** team for role-based agent crews
 - **ChromaDB** for vector storage
 
 ---
 
-**Built for the Associate Agentic AI Engineer role at Ingram Micro** — demonstrating hands-on experience with their exact technology stack.
+**Built for the Associate Agentic AI Engineer portfolio** — Demonstrating hands-on experience with LangGraph, AutoGen, CrewAI, LangChain for financial intelligence.
